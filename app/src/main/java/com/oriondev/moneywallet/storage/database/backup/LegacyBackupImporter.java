@@ -26,7 +26,7 @@ import androidx.annotation.NonNull;
 import com.oriondev.moneywallet.storage.database.ImportException;
 import com.oriondev.moneywallet.storage.database.legacy.LegacyDatabaseImporter;
 
-import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
@@ -95,11 +95,11 @@ public class LegacyBackupImporter extends AbstractBackupImporter {
                 throw new ImportException("Invalid backup file: database file not found");
             }
             if (header.isEncrypted()) {
-                header.setPassword(LEGACY_BACKUP_PASSWORD);
+                zipFile.setPassword(LEGACY_BACKUP_PASSWORD);
             }
             notifyImportStarted();
             // extract the database file inside the temporary folder
-            zipFile.extractFile(header, temporaryFolder.getPath(), null, TEMPORARY_DATABASE_FILE);
+            zipFile.extractFile(header, temporaryFolder.getPath(), TEMPORARY_DATABASE_FILE);
             // import everything from the legacy database
             ContentResolver contentResolver = getContentResolver();
             mDatabaseImporter = new LegacyDatabaseImporter(temporaryDatabase);
@@ -140,10 +140,9 @@ public class LegacyBackupImporter extends AbstractBackupImporter {
                 throw new ImportException("Invalid backup file: not a zip file");
             }
             ContentResolver contentResolver = getContentResolver();
-            for (Object obj : zipFile.getFileHeaders()) {
-                FileHeader header = (FileHeader) obj;
+            for (FileHeader header : zipFile.getFileHeaders()) {
                 if (header.isEncrypted()) {
-                    header.setPassword(LEGACY_BACKUP_PASSWORD);
+                    zipFile.setPassword(LEGACY_BACKUP_PASSWORD);
                 }
                 String path = header.getFileName();
                 if (path.startsWith(LEGACY_BACKUP_IMAGE_FOLDER_PATH)) {
@@ -151,7 +150,7 @@ public class LegacyBackupImporter extends AbstractBackupImporter {
                     if (!name.contains("/")) {
                         String identifier = mDatabaseImporter.getAttachmentId(name);
                         if (identifier != null) {
-                            zipFile.extractFile(header, attachmentFolder.getPath(), null, identifier);
+                            zipFile.extractFile(header, attachmentFolder.getPath(), identifier);
                             File attachment = new File(attachmentFolder, identifier);
                             mDatabaseImporter.importAttachment(contentResolver, identifier, attachment.length());
                         }

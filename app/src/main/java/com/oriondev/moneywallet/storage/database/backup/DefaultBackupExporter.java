@@ -28,10 +28,13 @@ import com.oriondev.moneywallet.storage.database.ExportException;
 import com.oriondev.moneywallet.storage.database.SQLDatabaseExporter;
 import com.oriondev.moneywallet.storage.database.json.JSONDatabaseExporter;
 
-import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
-import net.lingala.zip4j.util.Zip4jConstants;
+import net.lingala.zip4j.model.enums.AesKeyStrength;
+import net.lingala.zip4j.model.enums.CompressionLevel;
+import net.lingala.zip4j.model.enums.CompressionMethod;
+import net.lingala.zip4j.model.enums.EncryptionMethod;
 
 import org.apache.commons.io.FileUtils;
 
@@ -103,6 +106,9 @@ public class DefaultBackupExporter extends AbstractBackupExporter {
         try {
             ZipFile zipFile = new ZipFile(getBackupFile());
             zipFile.addFile(tempFile, generateZipParameters(BackupManager.FileStructure.FOLDER_DATABASES));
+            if (mPassword != null) {
+                zipFile.setPassword(mPassword.toCharArray());
+            }
         } catch (ZipException e) {
             throw new ExportException(e.getMessage());
         }
@@ -127,14 +133,13 @@ public class DefaultBackupExporter extends AbstractBackupExporter {
 
     private ZipParameters generateZipParameters(@NonNull String root) {
         ZipParameters parameters = new ZipParameters();
-        parameters.setRootFolderInZip(root);
-        parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
-        parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+        parameters.setRootFolderNameInZip(root);
+        parameters.setCompressionMethod(CompressionMethod.DEFLATE);
+        parameters.setCompressionLevel(CompressionLevel.NORMAL);
         if (!TextUtils.isEmpty(mPassword)) {
             parameters.setEncryptFiles(true);
-            parameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
-            parameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
-            parameters.setPassword(mPassword);
+            parameters.setEncryptionMethod(EncryptionMethod.AES);
+            parameters.setAesKeyStrength(AesKeyStrength.KEY_STRENGTH_256);
         }
         return parameters;
     }

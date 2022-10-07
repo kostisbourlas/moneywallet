@@ -27,9 +27,9 @@ import com.oriondev.moneywallet.storage.database.DatabaseImporter;
 import com.oriondev.moneywallet.storage.database.ImportException;
 import com.oriondev.moneywallet.storage.database.json.JSONDatabaseImporter;
 
-import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.io.ZipInputStream;
+import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.model.FileHeader;
 
 import java.io.File;
@@ -62,7 +62,7 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
             }
             if (header.isEncrypted()) {
                 if (mPassword != null) {
-                    header.setPassword(mPassword.toCharArray());
+                    zipFile.setPassword(mPassword.toCharArray());
                 } else {
                     throw new ImportException("Decryption filed: missing user password");
                 }
@@ -95,7 +95,7 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
             importer.importAttachments(contentResolver);
             importer.importTransactionAttachments(contentResolver);
             importer.importTransferAttachments(contentResolver);
-        } catch (ZipException e) {
+        } catch (IOException e) {
             throw new ImportException(e.getMessage());
         } finally {
             if (importer != null) {
@@ -111,11 +111,10 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
             if (!zipFile.isValidZipFile()) {
                 throw new ImportException("Invalid backup file: not a zip file");
             }
-            for (Object obj : zipFile.getFileHeaders()) {
-                FileHeader header = (FileHeader) obj;
+            for (FileHeader header : zipFile.getFileHeaders()) {
                 if (header.isEncrypted()) {
                     if (mPassword != null) {
-                        header.setPassword(mPassword.toCharArray());
+                        zipFile.setPassword(mPassword.toCharArray());
                     } else {
                         throw new ImportException("Decryption filed: missing user password");
                     }
@@ -124,7 +123,7 @@ public class DefaultBackupImporter extends AbstractBackupImporter {
                 if (path.startsWith(BackupManager.FileStructure.FOLDER_ATTACHMENTS)) {
                     String name = path.substring(BackupManager.FileStructure.FOLDER_ATTACHMENTS.length());
                     if (!name.contains("/")) {
-                        zipFile.extractFile(header, attachmentFolder.getPath(), null, name);
+                        zipFile.extractFile(header, attachmentFolder.getPath(), name);
                     }
                 }
             }
